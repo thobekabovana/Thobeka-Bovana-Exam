@@ -4,9 +4,8 @@ const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const multer = require("multer");
 const { getFirestore } = require("firebase-admin/firestore");
-require('dotenv').config(); // Load environment variables from .env file
-const router = express.Router();
-const ProductController = require('../FrontEnd/src/Components/ProductController');
+require('dotenv').config();
+const ProductController = require('./path/to/ProductController'); // Adjust the path
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,7 +26,7 @@ const serviceAccount = {
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    storageBucket: "your-firebase-storage-bucket", // Replace with your Firebase Storage bucket name
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET, // Update with environment variable
 });
 
 const db = getFirestore();
@@ -41,27 +40,24 @@ app.use(bodyParser.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Register endpoint
+// User Registration
 app.post("/register", async (req, res) => {
     const { email, password, name } = req.body;
-
     try {
         const userRecord = await auth.createUser({
             email,
             password,
             displayName: name,
         });
-
         res.status(201).json({ message: "User registered successfully", user: userRecord });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 });
 
-// Login endpoint
+// User Login
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
-
     try {
         const userRecord = await auth.getUserByEmail(email);
         if (userRecord) {
@@ -74,34 +70,25 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Add Product endpoint
+// Add Product Endpoint
 app.post("/add-product", upload.array("images", 10), async (req, res) => {
     const { productName, productDescription, price, userId } = req.body;
-    const images = req.files; // Access uploaded files
+    const images = req.files;
 
     try {
-        // Check if at least 3 images are uploaded
         if (!productName || !productDescription || !price || images.length < 3) {
             return res.status(400).json({ error: "All fields are required, including at least 3 images." });
         }
 
-        // Here, you can handle the image upload to your storage (Firebase Storage, AWS S3, etc.)
-        const imageUrls = []; // Array to hold URLs of uploaded images
-        for (const image of images) {
-            // For demo purposes, this just simulates the URL storage.
-            // Replace this with actual upload logic (to Firebase Storage or similar)
-            const fileName = `${Date.now()}-${image.originalname}`;
-            // Simulate saving file URL
-            imageUrls.push(`https://your-storage-url/${fileName}`);
-        }
+        // Simulate image URL creation
+        const imageUrls = images.map(image => `https://your-storage-url/${Date.now()}-${image.originalname}`);
 
-        // Save product data to Firestore
         await db.collection("AddProduct").add({
             productName,
             productDescription,
             price,
             userId,
-            images: imageUrls, // Store the URLs of uploaded images
+            images: imageUrls,
         });
 
         res.status(201).json({ message: "Product added successfully" });
@@ -111,27 +98,26 @@ app.post("/add-product", upload.array("images", 10), async (req, res) => {
     }
 });
 
-
+// Attach product routes using router
+const router = express.Router();
 
 // Get all products
-router.get('/', ProductController.getAllProducts);
+router.get("/", ProductController.getAllProducts);
 
 // Delete a product
-router.delete('/:id', ProductController.deleteProduct);
+router.delete("/:id", ProductController.deleteProduct);
 
 // Update a product
-router.put('/:id', ProductController.updateProduct);
+router.put("/:id", ProductController.updateProduct);
 
-module.exports = router;
+// Use the product routes
+app.use("/products", router);
 
-
-// Products endpoint
+// Products endpoint for fetching all products
 app.get("/products", async (req, res) => {
     try {
-        // Fetch products from Firebase or use mock data
-        const snapshot = await admin.firestore().collection('AddProduct').get();
-        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+        const snapshot = await db.collection("AddProduct").get();
+        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.json(products);
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -139,7 +125,7 @@ app.get("/products", async (req, res) => {
     }
 });
 
-
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

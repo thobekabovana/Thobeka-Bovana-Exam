@@ -59,5 +59,4 @@ const productSlice = createSlice({
   },
 });
 
-export { fetchProducts, deleteProduct, updateProduct };
 export default productSlice.reducer;

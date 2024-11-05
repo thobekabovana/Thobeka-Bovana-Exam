@@ -1,18 +1,24 @@
-// features/ProductListSlice.js
-
-// Import the necessary libraries
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// Create an async thunk for fetching products
+// Async thunk for fetching products
 export const fetchProducts = createAsyncThunk('products/fetchProducts', async () => {
-  const response = await axios.get('http://localhost:5000/products'); // Adjust the URL accordingly
-  return response.data; // This should return the products array
+  const response = await axios.get('http://localhost:5000/products');
+  return response.data;
 });
 
-// Create an async thunk for deleting a product
+// Async thunk for deleting a product
 export const deleteProduct = createAsyncThunk('products/deleteProduct', async (productId) => {
-  await axios.delete(`http://localhost:5000/products/${productId}`); // Ensure this is your delete endpoint
+  await axios.delete(`http://localhost:5000/products/${productId}`);
+  return productId; // Return the ID of the deleted product
+});
+
+// Async thunk for updating a product
+export const updateProduct = createAsyncThunk('products/updateProduct', async ({ productId, productData }) => {
+  const response = await axios.put(`http://localhost:5000/products/${productId}`, productData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data; // Assuming your API returns the updated product
 });
 
 const productSlice = createSlice({
@@ -30,16 +36,25 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload; // Assuming the payload is an array of products
+        state.products = action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
-        state.products = state.products.filter(product => product.id !== action.meta.arg); // Remove the deleted product
+        const id = action.payload;
+        state.products = state.products.filter(product => product.id !== id);
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        const updatedProduct = action.payload;
+        const index = state.products.findIndex(product => product.id === updatedProduct.id);
+        if (index !== -1) {
+          state.products[index] = updatedProduct; // Update the product in the state
+        }
       });
   },
 });
 
+export { fetchProducts, deleteProduct, updateProduct };
 export default productSlice.reducer;

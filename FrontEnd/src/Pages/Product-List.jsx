@@ -1,7 +1,6 @@
-// ProductList.js
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct } from '../features/ProductListSlice'; // Adjust import based on your file structure
+import { fetchProducts, deleteProduct, updateProduct } from '../features/ProductListSlice'; // Adjust import based on your file structure
 import axios from 'axios';
 
 const ProductList = () => {
@@ -17,15 +16,12 @@ const ProductList = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const handleDelete = async (productId) => {
-    try {
-      await dispatch(deleteProduct(productId)); // Assuming deleteProduct is a thunk that handles the deletion
-    } catch (error) {
-      console.error("Error deleting product:", error);
-    }
+  const handleDelete = (productId) => {
+    dispatch(deleteProduct(productId));
   };
 
-  const handleUpdate = async (productId) => {
+  const handleUpdate = (e) => {
+    e.preventDefault();
     const formData = new FormData();
     formData.append("productName", productName);
     formData.append("productDescription", productDescription);
@@ -33,18 +29,11 @@ const ProductList = () => {
     images.forEach((image) => {
       formData.append("images", image);
     });
-  
-    try {
-      await axios.put(`http://localhost:5000/products/${productId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setEditProduct(null); // Reset edit state
-      dispatch(fetchProducts()); // Fetch updated products
-    } catch (error) {
-      console.error("Error updating product:", error);
-    }
+
+    dispatch(updateProduct({ productId: editProduct, productData: formData }));
+    setEditProduct(null); // Reset edit state
+    dispatch(fetchProducts()); // Fetch updated products
   };
-  
 
   const handleImageChange = (e) => {
     setImages(Array.from(e.target.files)); // Convert FileList to Array
@@ -57,7 +46,6 @@ const ProductList = () => {
     setPrice(product.price);
     setImages([]); // Reset images for editing
   };
-  
 
   if (loading) {
     return <p className="text-white">Loading products...</p>; // Added class for text color
@@ -98,10 +86,7 @@ const ProductList = () => {
       {editProduct && (
         <div className="flex items-center justify-center min-h-screen bg-gray-800">
           <form 
-            onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdate(editProduct);
-              }}
+            onSubmit={handleUpdate}
             className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-lg">
             <h2 className="text-2xl text-white text-center mb-6">Update Product</h2>
 
@@ -161,7 +146,6 @@ const ProductList = () => {
               <button
                 type="submit"
                 className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-500 focus:outline-none"
-                disabled={loading}
               >
                 {loading ? "Submitting..." : "Update Product"}
               </button>

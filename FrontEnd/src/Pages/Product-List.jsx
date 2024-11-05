@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct, updateProduct } from '../features/ProductListSlice'; // Adjust import based on your file structure
-import axios from 'axios';
+import { fetchProducts, deleteProduct, updateProduct } from '../features/ProductListSlice';
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -31,12 +30,8 @@ const ProductList = () => {
     });
 
     dispatch(updateProduct({ productId: editProduct, productData: formData }));
-    setEditProduct(null); // Reset edit state
-    dispatch(fetchProducts()); // Fetch updated products
-  };
-
-  const handleImageChange = (e) => {
-    setImages(Array.from(e.target.files)); // Convert FileList to Array
+    setEditProduct(null);
+    dispatch(fetchProducts());
   };
 
   const handleEditChange = (product) => {
@@ -46,14 +41,6 @@ const ProductList = () => {
     setPrice(product.price);
     setImages([]); // Reset images for editing
   };
-
-  if (loading) {
-    return <p className="text-white">Loading products...</p>; // Added class for text color
-  }
-
-  if (error) {
-    return <p className="text-red-500">{error}</p>; // Display error message in red
-  }
 
   return (
     <div className="flex flex-col items-center">
@@ -85,71 +72,8 @@ const ProductList = () => {
 
       {editProduct && (
         <div className="flex items-center justify-center min-h-screen bg-gray-800">
-          <form 
-            onSubmit={handleUpdate}
-            className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-lg">
-            <h2 className="text-2xl text-white text-center mb-6">Update Product</h2>
-
-            <div className="mb-4">
-              <label className="block text-white mb-2">Product Name</label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-gray-600"
-                placeholder="Enter product name"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-white mb-2">Product Description</label>
-              <textarea
-                value={productDescription}
-                onChange={(e) => setProductDescription(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-gray-600"
-                placeholder="Enter product description"
-                rows="4"
-                required
-              ></textarea>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-white mb-2">Price ($)</label>
-              <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-gray-600"
-                placeholder="Enter price"
-                min="0"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-white mb-2">Product Images (3 or more)</label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full text-gray-400 bg-gray-700 p-2 rounded focus:outline-none"
-                required
-              />
-              {images.length > 0 && images.length < 3 && (
-                <p className="text-red-500 mt-2">Please select at least 3 images.</p>
-              )}
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-500 focus:outline-none"
-              >
-                {loading ? "Submitting..." : "Update Product"}
-              </button>
-            </div>
+          <form onSubmit={handleUpdate} className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-lg">
+            {/* Update Form Fields */}
           </form>
         </div>
       )}

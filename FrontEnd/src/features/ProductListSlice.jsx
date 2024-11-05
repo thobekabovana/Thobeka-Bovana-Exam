@@ -1,25 +1,30 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// Async thunk for fetching products
+const API_URL = 'http://localhost:5000/products';
+
+// Async thunk to fetch products
 export const fetchProducts = createAsyncThunk('products/fetchProducts', async () => {
-  const response = await axios.get('http://localhost:5000/products');
+  const response = await axios.get(API_URL);
   return response.data;
 });
 
-// Async thunk for deleting a product
+// Async thunk to delete a product
 export const deleteProduct = createAsyncThunk('products/deleteProduct', async (productId) => {
-  await axios.delete(`http://localhost:5000/products/${productId}`);
-  return productId; // Return the ID of the deleted product
+  await axios.delete(`${API_URL}/${productId}`);
+  return productId;
 });
 
-// Async thunk for updating a product
-export const updateProduct = createAsyncThunk('products/updateProduct', async ({ productId, productData }) => {
-  const response = await axios.put(`http://localhost:5000/products/${productId}`, productData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data; // Assuming your API returns the updated product
-});
+// Async thunk to update a product
+export const updateProduct = createAsyncThunk(
+  'products/updateProduct',
+  async ({ productId, productData }) => {
+    const response = await axios.put(`${API_URL}/${productId}`, productData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
+);
 
 const productSlice = createSlice({
   name: 'products',
@@ -28,7 +33,6 @@ const productSlice = createSlice({
     products: [],
     error: null,
   },
-  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
@@ -43,14 +47,13 @@ const productSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
-        const id = action.payload;
-        state.products = state.products.filter(product => product.id !== id);
+        state.products = state.products.filter((product) => product.id !== action.payload);
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         const updatedProduct = action.payload;
-        const index = state.products.findIndex(product => product.id === updatedProduct.id);
+        const index = state.products.findIndex((product) => product.id === updatedProduct.id);
         if (index !== -1) {
-          state.products[index] = updatedProduct; // Update the product in the state
+          state.products[index] = updatedProduct;
         }
       });
   },

@@ -5,6 +5,8 @@ const admin = require("firebase-admin");
 const multer = require("multer");
 const { getFirestore } = require("firebase-admin/firestore");
 require('dotenv').config(); // Load environment variables from .env file
+const router = express.Router();
+const ProductController = require('../FrontEnd/src/Components/ProductController');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -108,6 +110,20 @@ app.post("/add-product", upload.array("images", 10), async (req, res) => {
         res.status(500).json({ error: "Failed to add product: " + error.message });
     }
 });
+
+
+
+// Get all products
+router.get('/', ProductController.getAllProducts);
+
+// Delete a product
+router.delete('/:id', ProductController.deleteProduct);
+
+// Update a product
+router.put('/:id', ProductController.updateProduct);
+
+module.exports = router;
+
 
 // Products endpoint
 app.get("/products", async (req, res) => {

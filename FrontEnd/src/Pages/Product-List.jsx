@@ -5,7 +5,7 @@ import { fetchProducts, deleteProduct, updateProduct } from '../features/Product
 const ProductList = () => {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
-  const [editProduct, setEditProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -15,8 +15,19 @@ const ProductList = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const handleDelete = (productId) => {
-    dispatch(deleteProduct(productId));
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    setProductName(product.productName);
+    setProductDescription(product.productDescription);
+    setPrice(product.price);
+    setImages([]); // Reset images for updating
+  };
+
+  const handleDelete = () => {
+    if (selectedProduct) {
+      dispatch(deleteProduct(selectedProduct.id));
+      setSelectedProduct(null);
+    }
   };
 
   const handleUpdate = (e) => {
@@ -29,22 +40,15 @@ const ProductList = () => {
       formData.append("images", image);
     });
 
-    dispatch(updateProduct({ productId: editProduct, productData: formData }));
-    setEditProduct(null);
+    dispatch(updateProduct({ productId: selectedProduct.id, productData: formData }));
+    setSelectedProduct(null);
     dispatch(fetchProducts());
-  };
-
-  const handleEditChange = (product) => {
-    setEditProduct(product.id);
-    setProductName(product.productName);
-    setProductDescription(product.productDescription);
-    setPrice(product.price);
-    setImages([]); // Reset images for editing
   };
 
   return (
     <div className="flex flex-col items-center">
       <h2 className="text-2xl text-white mb-4">Product List</h2>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {products.map((product) => (
           <div key={product.id} className="bg-gray-900 p-4 rounded-lg shadow-md">
@@ -58,22 +62,59 @@ const ProductList = () => {
                 ))}
               </div>
             )}
-            <div className="mt-4 flex justify-between">
-              <button 
-                className="bg-red-600 text-white px-2 py-1 rounded" 
-                onClick={() => handleDelete(product.id)}>Delete</button>
-              <button 
-                className="bg-blue-600 text-white px-2 py-1 rounded" 
-                onClick={() => handleEditChange(product)}>Update</button>
-            </div>
+            <button 
+              className="bg-blue-600 text-white px-2 py-1 rounded mt-4"
+              onClick={() => handleSelectProduct(product)}
+            >
+              Select for Actions
+            </button>
           </div>
         ))}
       </div>
 
-      {editProduct && (
-        <div className="flex items-center justify-center min-h-screen bg-gray-800">
-          <form onSubmit={handleUpdate} className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-lg">
-            {/* Update Form Fields */}
+      {/* Actions for Selected Product */}
+      {selectedProduct && (
+        <div className="flex flex-col items-center bg-gray-800 p-4 mt-8 rounded shadow-lg w-full max-w-md">
+          <h3 className="text-xl text-white mb-4">Edit Selected Product</h3>
+          <button 
+            className="bg-red-600 text-white px-2 py-1 rounded mb-4"
+            onClick={handleDelete}
+          >
+            Delete Product
+          </button>
+          <form onSubmit={handleUpdate} className="w-full">
+            <input
+              type="text"
+              className="w-full mb-2 p-2"
+              placeholder="Product Name"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+            />
+            <textarea
+              className="w-full mb-2 p-2"
+              placeholder="Product Description"
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+            />
+            <input
+              type="number"
+              className="w-full mb-2 p-2"
+              placeholder="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+            <input
+              type="file"
+              multiple
+              className="w-full mb-2"
+              onChange={(e) => setImages(Array.from(e.target.files))}
+            />
+            <button 
+              type="submit" 
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Update Product
+            </button>
           </form>
         </div>
       )}
